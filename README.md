@@ -60,7 +60,7 @@ Grid search over 16 threshold values (0.75–0.90) × 21 alert percentages (0.20
 
 ## Live App
 
-<video src="https://raw.githubusercontent.com/LukeConran/ready-alert/main/giphy.mp4" controls autoplay loop muted></video>
+![App demo](giphy.gif)
 
 Everything runs in your browser with no server needed. MediaPipe Face Mesh (WebAssembly), a more sophisticated version of dlib, extracts 468 facial landmarks per frame client-side. The EAR is computed in JavaScript, the rolling window is maintained locally, and the alert fires without any network round-trip. The EAR trace plots in real time alongside your personal threshold line.
 
