@@ -7,240 +7,383 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --border: #2a2d3a;
-    --text: #e2e8f0;
-    --muted: #64748b;
-    --green: #22c55e;
-    --red: #ef4444;
-    --accent: #6366f1;
+    --paper: #f4f6f9;
+    --white: #ffffff;
+    --ink: #14171c;
+    --muted: #5c6570;
+    --line: #e1e6ee;
+    --blue: #1d4ed8;
+    --blue-deep: #1e3a8a;
+    --blue-soft: #e8eefc;
+    --amber: #c4841d;
+    --amber-deep: #8d5e10;
+    --amber-soft: #f8edd6;
+    --shadow: 0 12px 32px rgba(20, 23, 28, 0.16);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
   body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
     min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  button, summary { font-family: inherit; }
+
+  .topbar {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 18px;
+    background: var(--white);
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .mark {
+    width: 14px; height: 28px; border-radius: 3px;
+    background: var(--blue);
+    flex-shrink: 0;
+  }
+  .brand h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
+  .brand p { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+  .actions { position: relative; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px; font-size: 0.88rem; font-weight: 600;
+    border-radius: 8px; cursor: pointer; white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-blue { background: var(--blue); color: white; border: 1px solid var(--blue); }
+  .btn-blue:not(:disabled):hover { background: var(--blue-deep); }
+  .btn-ink { background: var(--white); color: var(--ink); border: 1px solid var(--ink); }
+  .btn-ink:not(:disabled):hover { background: var(--ink); color: var(--white); }
+  .btn:focus-visible, summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .btn-stop::before, .btn-start::before { content: ""; flex-shrink: 0; }
+  .btn-stop::before { width: 8px; height: 8px; background: currentColor; }
+  .btn-start::before {
+    border-style: solid;
+    border-width: 5px 0 5px 8px;
+    border-color: transparent transparent transparent currentColor;
   }
 
-  /* Loading banner */
+  .help { position: static; }
+  .help summary {
+    list-style: none; cursor: pointer;
+    font-size: 0.88rem; font-weight: 600; color: var(--ink);
+    padding: 8px 10px; border-radius: 8px;
+  }
+  .help summary::-webkit-details-marker { display: none; }
+  .help summary:hover { background: var(--paper); }
+  .help-panel {
+    position: absolute; right: 0; top: calc(100% + 8px);
+    width: min(300px, calc(100vw - 24px)); z-index: 30;
+    background: var(--white); border: 1px solid var(--line);
+    border-radius: 12px; padding: 14px 14px 6px;
+    box-shadow: var(--shadow); text-align: left;
+  }
+  .step { display: flex; gap: 10px; margin-bottom: 12px; }
+  .step-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--blue); color: white;
+    font-size: 0.75rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .step-text { font-size: 0.82rem; color: var(--muted); line-height: 1.45; }
+  .step-text strong { color: var(--ink); font-weight: 600; }
+
   #load-banner {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    background: #1e293b;
-    border-bottom: 1px solid var(--border);
-    padding: 12px 20px;
-    display: flex; align-items: center; gap: 12px;
-    font-size: 14px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 18px; background: var(--blue-soft);
+    border-bottom: 1px solid #d5e0f8;
+    color: var(--blue-deep); font-size: 0.88rem; flex-shrink: 0;
   }
   #load-banner.hidden { display: none; }
   .spinner {
-    width: 18px; height: 18px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    flex-shrink: 0;
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid #c5d4f6; border-top-color: var(--blue);
+    animation: spin 0.8s linear infinite; flex-shrink: 0;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  header { padding: 60px 20px 20px; text-align: center; }
-  header h1 { font-size: 1.8rem; font-weight: 700; }
-  header p { color: var(--muted); margin-top: 6px; font-size: 0.95rem; }
-
-  .container {
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 20px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-  @media (max-width: 640px) {
-    .container { grid-template-columns: 1fr; }
-    header { padding-top: 70px; }
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-  }
-  .card h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 14px; }
-
-  #cam-card { grid-column: 1 / -1; }
+  .stage { flex: 1; min-height: 0; padding: 12px; }
   #cam-wrap {
-    position: relative;
-    background: #000;
-    border-radius: 8px;
-    overflow: hidden;
-    aspect-ratio: 4/3;
+    position: relative; width: 100%; height: 100%;
+    background: #d5dbe3; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 1px 0 rgba(20, 23, 28, 0.04);
   }
-  #webcam {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    object-fit: cover;
-    transform: scaleX(-1);
+  #webcam, #overlay-canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; transform: scaleX(-1);
   }
-  #overlay-canvas {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    transform: scaleX(-1);
+  #cam-placeholder {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 0.95rem;
   }
+  #cam-placeholder.hidden { display: none; }
 
   #status-badge {
-    position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
-    padding: 6px 18px;
-    border-radius: 999px;
-    font-weight: 700; font-size: 1rem; letter-spacing: 0.05em;
-    backdrop-filter: blur(6px);
-    background: rgba(0,0,0,0.6); color: var(--muted);
-    white-space: nowrap; transition: background 0.2s, color 0.2s;
+    position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+    z-index: 3; display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 14px; border-radius: 999px;
+    background: rgba(255, 255, 255, 0.94); color: var(--ink);
+    font-weight: 700; font-size: 0.92rem; letter-spacing: 0.04em;
+    box-shadow: 0 6px 18px rgba(20, 23, 28, 0.12);
+    white-space: nowrap;
   }
-  #status-badge.alert  { background: rgba(34,197,94,0.25); color: var(--green); }
-  #status-badge.drowsy { background: rgba(239,68,68,0.3); color: var(--red); animation: pulse 0.6s ease-in-out infinite alternate; }
-  #status-badge.calib  { background: rgba(99,102,241,0.25); color: #a5b4fc; }
-  @keyframes pulse { from { opacity:1; } to { opacity:0.5; } }
-
-  #controls { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
-  button {
-    padding: 10px 22px; font-size: 0.9rem; font-weight: 600;
-    border: none; border-radius: 8px; cursor: pointer;
-    background: var(--accent); color: #fff; transition: opacity 0.15s;
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted); flex-shrink: 0;
   }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
-  button:not(:disabled):hover { opacity: 0.85; }
-  #ear-readout { font-size: 0.85rem; color: var(--muted); margin-left: auto; }
+  #status-badge.ready .dot,
+  #status-badge.alert .dot,
+  #status-badge.calib .dot { background: var(--blue); }
+  #status-badge.alert,
+  #status-badge.calib { color: var(--blue-deep); }
+  #status-badge.drowsy {
+    background: var(--amber-soft); color: var(--amber-deep);
+    animation: pulse 1.1s ease-in-out infinite alternate;
+  }
+  #status-badge.drowsy .dot { background: var(--amber); }
+  #status-badge.paused { color: var(--muted); }
+  #status-badge.paused .dot {
+    background: transparent; box-shadow: inset 0 0 0 2px var(--muted);
+  }
+  @keyframes pulse { from { opacity: 1; } to { opacity: 0.62; } }
+  @media (prefers-reduced-motion: reduce) {
+    #status-badge.drowsy, .spinner { animation: none; }
+  }
 
-  #chart-card { grid-column: 1 / -1; }
-  #ear-chart-wrap { height: 200px; }
+  .hud {
+    position: absolute; z-index: 3;
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--ink);
+    border: 1px solid rgba(20, 23, 28, 0.06);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(8px);
+  }
+  .hud-kicker {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .hud-stats { left: 14px; bottom: 14px; width: 236px; padding: 12px 14px 10px; }
+  .ear-block { margin-top: 4px; }
+  #stat-ear {
+    display: block; font-size: 1.85rem; font-weight: 700; letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums; line-height: 1; color: var(--blue);
+  }
+  body[data-state="drowsy"] #stat-ear { color: var(--amber-deep); }
+  body[data-state="paused"] #stat-ear,
+  body[data-state="loading"] #stat-ear { color: var(--muted); }
+  #stat-ear-label { display: block; margin-top: 3px; font-size: 0.75rem; color: var(--muted); }
+  .live-list { margin: 10px 0 12px; display: grid; gap: 4px; }
+  .live-list div { display: flex; justify-content: space-between; gap: 12px; font-size: 0.82rem; }
+  .live-list dt { color: var(--muted); }
+  .live-list dd { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .method {
+    border-top: 1px solid var(--line); padding-top: 8px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px;
+  }
+  .method strong {
+    display: block; font-size: 0.95rem; font-weight: 700;
+    font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+  }
+  .method span { display: block; font-size: 0.68rem; color: var(--muted); line-height: 1.3; margin-top: 1px; }
 
-  .stat { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
-  .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
-  .step { display: flex; gap: 12px; margin-bottom: 12px; }
-  .step-num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .step-text { font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
+  .hud-chart { right: 14px; bottom: 14px; width: min(340px, 38vw); padding: 10px 12px 8px; }
+  #ear-chart-wrap { height: 128px; margin-top: 4px; }
+
+  @media (max-width: 720px) {
+    .brand p { display: none; }
+    .topbar { flex-wrap: wrap; padding: 10px 12px; gap: 8px; }
+    .actions { width: 100%; flex-wrap: wrap; }
+    .stage { padding: 8px; }
+    .hud-stats, .hud-chart { top: auto; bottom: 10px; width: calc(50% - 15px); }
+    .hud-stats { left: 10px; right: auto; padding: 10px 10px 8px; }
+    .hud-chart { right: 10px; left: auto; }
+    .method { grid-template-columns: 1fr; gap: 3px; }
+    .method div { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .method strong { font-size: 0.82rem; }
+    .method span { font-size: 0.65rem; margin-top: 0; }
+    #stat-ear { font-size: 1.45rem; }
+    #ear-chart-wrap { height: 84px; }
+    #status-badge { top: 10px; font-size: 0.82rem; }
+  }
 </style>
 </head>
-<body>
+<body data-state="loading">
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark" aria-hidden="true"></span>
+    <div>
+      <h1>Ready Alert</h1>
+      <p>Real-time driver drowsiness detection</p>
+    </div>
+  </div>
+  <div class="actions">
+    <details class="help">
+      <summary>How it works</summary>
+      <div class="help-panel">
+        <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Calibrate.</strong> Three seconds of looking at the camera sets your personal alert baseline.</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Watch.</strong> Each frame’s eye aspect ratio is compared with your threshold over a rolling 4-second window.</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Alert.</strong> If 48% of that window falls below the threshold, you get a drowsy alert and a beep.</div></div>
+      </div>
+    </details>
+    <button id="model-btn" class="btn btn-blue btn-start" type="button" disabled aria-pressed="false">Start model</button>
+    <button id="calib-btn" class="btn btn-ink" type="button" disabled>Calibrate</button>
+  </div>
+</header>
 
 <div id="load-banner">
   <div class="spinner"></div>
   <span id="load-text">Loading face detection model...</span>
 </div>
 
-<header>
-  <h1>Ready Alert</h1>
-  <p>Real-time driver drowsiness detection</p>
-</header>
+<main class="stage">
+  <div id="cam-wrap">
+    <video id="webcam" autoplay playsinline muted></video>
+    <canvas id="overlay-canvas"></canvas>
+    <p id="cam-placeholder">Starting camera…</p>
+    <div id="status-badge" class="loading"><span class="dot"></span><span id="status-text">Loading</span></div>
 
-<div class="container">
+    <section class="hud hud-stats" aria-label="Session stats">
+      <p class="hud-kicker">Session</p>
+      <div class="ear-block">
+        <span id="stat-ear">—</span>
+        <span id="stat-ear-label">current EAR</span>
+      </div>
+      <dl class="live-list">
+        <div><dt>Baseline</dt><dd id="stat-baseline">—</dd></div>
+        <div><dt>Threshold</dt><dd id="stat-threshold">—</dd></div>
+        <div><dt>Window</dt><dd id="stat-window">—</dd></div>
+      </dl>
+      <div class="method">
+        <div><strong id="param-ratio">0.79</strong><span>baseline ratio</span></div>
+        <div><strong id="param-pct">48%</strong><span>of the 4s window</span></div>
+        <div><strong>25</strong><span>subjects</span></div>
+        <div><strong>0</strong><span>ML models</span></div>
+      </div>
+    </section>
 
-  <div class="card" id="cam-card">
-    <h2>Live Feed</h2>
-    <div id="cam-wrap">
-      <video id="webcam" autoplay playsinline muted></video>
-      <canvas id="overlay-canvas"></canvas>
-      <div id="status-badge">Loading...</div>
-    </div>
-    <div id="controls">
-      <button id="calib-btn" disabled onclick="startCalibration()">Begin Calibration</button>
-      <span id="ear-readout">EAR: —</span>
-    </div>
+    <section class="hud hud-chart" aria-label="Eye aspect ratio versus threshold">
+      <p class="hud-kicker">EAR vs threshold</p>
+      <div id="ear-chart-wrap">
+        <canvas id="ear-chart"></canvas>
+      </div>
+    </section>
   </div>
-
-  <div class="card" id="chart-card">
-    <h2>Eye Aspect Ratio Over Time</h2>
-    <div id="ear-chart-wrap">
-      <canvas id="ear-chart"></canvas>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>How It Works</h2>
-    <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Calibrate:</strong> 3 seconds captures your personal alert EAR baseline while you look normally at the camera.</div></div>
-    <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Detect:</strong> MediaPipe extracts 468 facial landmarks per frame. Your EAR is compared to your personal threshold across a 30-frame rolling window.</div></div>
-    <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Alert:</strong> If ≥48% of frames in the window fall below your threshold, a drowsy alert fires with an audio beep.</div></div>
-  </div>
-
-  <div class="card">
-    <h2>Parameters (Grid-Searched)</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px">
-      <div><div class="stat">0.79</div><div class="stat-label">EAR threshold<br>(ratio of personal baseline)</div></div>
-      <div><div class="stat">48%</div><div class="stat-label">Alert percentage<br>(of 4-second window)</div></div>
-      <div><div class="stat">25</div><div class="stat-label">Subjects in parameter sweep</div></div>
-      <div><div class="stat">0</div><div class="stat-label">ML models at inference time</div></div>
-    </div>
-  </div>
-
-</div>
+</main>
 
 <script type="module">
 import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/vision_bundle.mjs";
 
-// ─── Config ────────────────────────────────────────────────────────────────────
-const CALIB_DURATION_MS = 3000;  // 3 seconds of calibration
-const WINDOW_MS         = 4000;  // rolling 4-second window
-const ALERT_PCT         = 0.48;  // 40% of window below threshold → drowsy
+const CALIB_DURATION_MS = 3000;
+const WINDOW_MS         = 4000;
+const ALERT_PCT         = 0.48;
 const EAR_RATIO         = 0.79;
 
-// MediaPipe Face Mesh eye landmark indices (478-point model)
 const LEFT_EYE  = [33, 160, 158, 133, 153, 144];
 const RIGHT_EYE = [362, 385, 387, 263, 373, 380];
 
-// ─── State ─────────────────────────────────────────────────────────────────────
 let faceLandmarker = null;
 let baseline = null;
-let earWindow = [];  // [{t: timestamp, below: bool}]
+let earWindow = [];
 let calibrating = false;
 let calibEars = [];
 let calibStart = 0;
 let detecting = false;
+let modelRunning = false;
+let rafId = 0;
 let audioCtx = null;
 let lastBeep = 0;
 let lastVideoTime = -1;
 
-// ─── DOM ───────────────────────────────────────────────────────────────────────
-const video      = document.getElementById('webcam');
-const canvas     = document.getElementById('overlay-canvas');
-const ctx2d      = canvas.getContext('2d');
-const badge      = document.getElementById('status-badge');
-const calibBtn   = document.getElementById('calib-btn');
-const earReadout = document.getElementById('ear-readout');
-const loadBanner = document.getElementById('load-banner');
-const loadText   = document.getElementById('load-text');
+const video       = document.getElementById('webcam');
+const canvas      = document.getElementById('overlay-canvas');
+const ctx2d       = canvas.getContext('2d');
+const badge       = document.getElementById('status-badge');
+const statusText  = document.getElementById('status-text');
+const calibBtn    = document.getElementById('calib-btn');
+const modelBtn    = document.getElementById('model-btn');
+const loadBanner  = document.getElementById('load-banner');
+const loadText    = document.getElementById('load-text');
+const statEar     = document.getElementById('stat-ear');
+const statEarLabel = document.getElementById('stat-ear-label');
+const statBaseline = document.getElementById('stat-baseline');
+const statThreshold = document.getElementById('stat-threshold');
+const statWindow  = document.getElementById('stat-window');
 
-// ─── EAR math ──────────────────────────────────────────────────────────────────
+document.getElementById('param-ratio').textContent = EAR_RATIO.toFixed(2);
+document.getElementById('param-pct').textContent = Math.round(ALERT_PCT * 100) + '%';
+
 function dist(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 function ear(lm, pts) {
-  const [p1,p2,p3,p4,p5,p6] = pts.map(i => lm[i]);
-  return (dist(p2,p6) + dist(p3,p5)) / (2 * dist(p1,p4));
+  const [p1, p2, p3, p4, p5, p6] = pts.map(i => lm[i]);
+  return (dist(p2, p6) + dist(p3, p5)) / (2 * dist(p1, p4));
 }
 function meanEar(lm) {
   return (ear(lm, LEFT_EYE) + ear(lm, RIGHT_EYE)) / 2;
 }
 
-// ─── Chart ─────────────────────────────────────────────────────────────────────
-const chartLabels    = [];
-const chartData      = [];
+const chartLabels = [];
+const chartData = [];
 const chartThreshold = [];
 const chart = new Chart(document.getElementById('ear-chart'), {
   type: 'line',
   data: {
     labels: chartLabels,
     datasets: [
-      { label: 'EAR', data: chartData, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.08)', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: true },
-      { label: 'Threshold', data: chartThreshold, borderColor: '#ef4444', borderWidth: 1.5, borderDash: [4,4], pointRadius: 0 }
+      {
+        label: 'EAR',
+        data: chartData,
+        borderColor: '#1d4ed8',
+        backgroundColor: 'rgba(29, 78, 216, 0.08)',
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: true
+      },
+      {
+        label: 'Threshold',
+        data: chartThreshold,
+        borderColor: '#c4841d',
+        borderWidth: 1.5,
+        borderDash: [6, 4],
+        pointRadius: 0
+      }
     ]
   },
   options: {
-    animation: false, responsive: true, maintainAspectRatio: false,
+    animation: false,
+    responsive: true,
+    maintainAspectRatio: false,
     scales: {
       x: { display: false },
-      y: { min: 0.1, max: 0.5, grid: { color: '#2a2d3a' }, ticks: { color: '#64748b', font: { size: 11 } } }
+      y: {
+        min: 0.1,
+        max: 0.5,
+        border: { display: false },
+        grid: { color: '#e6ebf1' },
+        ticks: { color: '#5c6570', font: { size: 10 }, maxTicksLimit: 5 }
+      }
     },
-    plugins: { legend: { labels: { color: '#64748b', font: { size: 11 } } } }
+    plugins: {
+      legend: {
+        labels: { color: '#3d4450', font: { size: 10 }, boxWidth: 12, padding: 8 }
+      }
+    }
   }
 });
 
@@ -249,33 +392,106 @@ function pushChart(earVal) {
   chartLabels.push('');
   chartData.push(earVal !== null ? +earVal.toFixed(4) : null);
   chartThreshold.push(thresh ? +thresh.toFixed(4) : null);
-  if (chartLabels.length > 120) { chartLabels.shift(); chartData.shift(); chartThreshold.shift(); }
+  if (chartLabels.length > 120) {
+    chartLabels.shift();
+    chartData.shift();
+    chartThreshold.shift();
+  }
   chart.update('none');
 }
 
-// ─── Audio ─────────────────────────────────────────────────────────────────────
 function beep() {
   if (!audioCtx || Date.now() - lastBeep < 2000) return;
   lastBeep = Date.now();
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
-  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
   osc.frequency.value = 880;
   gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
-  osc.start(); osc.stop(audioCtx.currentTime + 0.6);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.6);
 }
 
-// ─── Detection loop ────────────────────────────────────────────────────────────
+function setStatus(state, text) {
+  document.body.dataset.state = state;
+  badge.className = state;
+  statusText.textContent = text;
+}
+
+function syncControls() {
+  const ready = !!faceLandmarker;
+  modelBtn.disabled = !ready;
+  if (!ready) return;
+  if (modelRunning) {
+    modelBtn.textContent = 'Stop model';
+    modelBtn.className = 'btn btn-ink btn-stop';
+    modelBtn.setAttribute('aria-pressed', 'true');
+    calibBtn.disabled = calibrating;
+    calibBtn.title = '';
+  } else {
+    modelBtn.textContent = 'Start model';
+    modelBtn.className = 'btn btn-blue btn-start';
+    modelBtn.setAttribute('aria-pressed', 'false');
+    calibBtn.disabled = true;
+    calibBtn.title = 'Start the model to calibrate';
+  }
+  calibBtn.textContent = baseline ? 'Recalibrate' : 'Calibrate';
+}
+
+function updateHud(earVal) {
+  if (baseline) {
+    statBaseline.textContent = baseline.toFixed(3);
+    statThreshold.textContent = (baseline * EAR_RATIO).toFixed(3);
+  } else {
+    statBaseline.textContent = '—';
+    statThreshold.textContent = '—';
+  }
+
+  if (!modelRunning) {
+    statEar.textContent = '—';
+    statEarLabel.textContent = 'model stopped';
+    statWindow.textContent = '—';
+    return;
+  }
+  if (calibrating) {
+    const pct = Math.min(100, Math.round((performance.now() - calibStart) / CALIB_DURATION_MS * 100));
+    statEar.textContent = pct + '%';
+    statEarLabel.textContent = 'calibrating';
+    statWindow.textContent = '—';
+    return;
+  }
+  if (!detecting || earVal == null) {
+    statEar.textContent = '—';
+    statEarLabel.textContent = detecting ? 'no face' : 'current EAR';
+    statWindow.textContent = '—';
+    return;
+  }
+  statEar.textContent = earVal.toFixed(3);
+  statEarLabel.textContent = 'current EAR';
+  const frac = earWindow.filter(r => r.below).length / earWindow.length;
+  statWindow.textContent = Math.round(frac * 100) + '%';
+}
+
+function clearOverlay() {
+  ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+}
+
 function detect() {
-  if (!faceLandmarker || video.readyState < 2) { requestAnimationFrame(detect); return; }
+  rafId = 0;
+  if (!modelRunning || !faceLandmarker) return;
+  if (video.readyState < 2) {
+    rafId = requestAnimationFrame(detect);
+    return;
+  }
 
   const now = performance.now();
   if (video.currentTime !== lastVideoTime) {
     lastVideoTime = video.currentTime;
     const results = faceLandmarker.detectForVideo(video, now);
 
-    canvas.width  = video.videoWidth;
+    canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     ctx2d.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -283,8 +499,38 @@ function detect() {
       const lm = results.faceLandmarks[0];
       const e = meanEar(lm);
 
-      // Draw eye outlines
-      ctx2d.strokeStyle = '#6366f1';
+      if (calibrating) {
+        calibEars.push(e);
+        updateHud(e);
+        if (now - calibStart >= CALIB_DURATION_MS) {
+          calibrating = false;
+          baseline = calibEars.reduce((a, b) => a + b, 0) / calibEars.length;
+          setStatus('alert', 'Not drowsy');
+          detecting = true;
+          syncControls();
+          updateHud(e);
+        }
+      } else if (detecting) {
+        earWindow.push({ t: now, below: e < baseline * EAR_RATIO });
+        while (earWindow.length > 0 && now - earWindow[0].t > WINDOW_MS) earWindow.shift();
+        if (now - earWindow[0].t >= WINDOW_MS * 0.75) {
+          const frac = earWindow.filter(r => r.below).length / earWindow.length;
+          if (frac >= ALERT_PCT) {
+            setStatus('drowsy', 'Drowsy');
+            beep();
+          } else {
+            setStatus('alert', 'Not drowsy');
+          }
+        }
+        updateHud(e);
+        pushChart(e);
+      } else {
+        statEar.textContent = e.toFixed(3);
+        statEarLabel.textContent = 'current EAR';
+        pushChart(e);
+      }
+
+      ctx2d.strokeStyle = document.body.dataset.state === 'drowsy' ? '#c4841d' : '#1d4ed8';
       ctx2d.lineWidth = 1.5;
       [LEFT_EYE, RIGHT_EYE].forEach(pts => {
         ctx2d.beginPath();
@@ -293,63 +539,81 @@ function detect() {
           const y = lm[idx].y * canvas.height;
           i === 0 ? ctx2d.moveTo(x, y) : ctx2d.lineTo(x, y);
         });
-        ctx2d.closePath(); ctx2d.stroke();
+        ctx2d.closePath();
+        ctx2d.stroke();
       });
-
-      if (calibrating) {
-        const elapsed = now - calibStart;
-        const pct = Math.min(100, Math.round(elapsed / CALIB_DURATION_MS * 100));
-        calibEars.push(e);
-        earReadout.textContent = `Calibrating: ${pct}%`;
-        if (elapsed >= CALIB_DURATION_MS) {
-          calibrating = false;
-          baseline = calibEars.reduce((a,b) => a+b, 0) / calibEars.length;
-          earReadout.textContent = `Baseline EAR: ${baseline.toFixed(3)}`;
-          badge.className = 'alert';
-          badge.textContent = 'NOT DROWSY';
-          detecting = true;
-        }
-      } else if (detecting) {
-        earReadout.textContent = `EAR: ${e.toFixed(3)}  |  baseline: ${baseline.toFixed(3)}`;
-        // Time-based rolling window — drop entries older than WINDOW_MS
-        earWindow.push({ t: now, below: e < baseline * EAR_RATIO });
-        while (earWindow.length > 0 && now - earWindow[0].t > WINDOW_MS) earWindow.shift();
-        if (now - earWindow[0].t >= WINDOW_MS * 0.75) {
-          // Only alert once we have at least 75% of the window filled
-          const frac = earWindow.filter(r => r.below).length / earWindow.length;
-          if (frac >= ALERT_PCT) {
-            badge.className = 'drowsy'; badge.textContent = 'DROWSY';
-            beep();
-          } else {
-            badge.className = 'alert'; badge.textContent = 'NOT DROWSY';
-          }
-        }
-        pushChart(e);
-      }
     } else if (detecting) {
-      earReadout.textContent = 'EAR: — (no face)';
+      updateHud(null);
+      pushChart(null);
+    } else if (calibrating) {
+      updateHud(null);
+    } else {
+      statEar.textContent = '—';
+      statEarLabel.textContent = 'no face';
       pushChart(null);
     }
   }
-  requestAnimationFrame(detect);
+
+  if (modelRunning) rafId = requestAnimationFrame(detect);
 }
 
-// ─── Calibration ───────────────────────────────────────────────────────────────
-window.startCalibration = function() {
-  audioCtx = new AudioContext();
-  calibBtn.disabled = true;
-  badge.className = 'calib'; badge.textContent = 'Calibrating…';
-  detecting = false; calibrating = true; calibEars = []; earWindow = [];
-  calibStart = performance.now();
-};
+function startModel() {
+  if (!faceLandmarker || modelRunning) return;
+  modelRunning = true;
+  if (baseline) {
+    detecting = true;
+    earWindow = [];
+    setStatus('alert', 'Not drowsy');
+  } else {
+    detecting = false;
+    setStatus('ready', 'Ready');
+  }
+  syncControls();
+  updateHud(null);
+  rafId = requestAnimationFrame(detect);
+}
 
-// ─── Init ──────────────────────────────────────────────────────────────────────
+function stopModel() {
+  modelRunning = false;
+  calibrating = false;
+  detecting = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = 0;
+  clearOverlay();
+  setStatus('paused', 'Model stopped');
+  syncControls();
+  updateHud(null);
+}
+
+modelBtn.addEventListener('click', () => {
+  if (modelRunning) stopModel();
+  else startModel();
+});
+
+window.startCalibration = function() {
+  if (!modelRunning || !faceLandmarker) return;
+  if (!audioCtx) audioCtx = new AudioContext();
+  detecting = false;
+  calibrating = true;
+  calibEars = [];
+  earWindow = [];
+  calibStart = performance.now();
+  setStatus('calib', 'Calibrating');
+  syncControls();
+  updateHud(null);
+};
+calibBtn.addEventListener('click', () => window.startCalibration());
+
+video.addEventListener('playing', () => {
+  document.getElementById('cam-placeholder').classList.add('hidden');
+});
+
 async function init() {
-  // Start webcam
-  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 } });
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'user', width: 640, height: 480 }
+  });
   video.srcObject = stream;
 
-  // Load MediaPipe
   loadText.textContent = 'Loading face detection model (~10 MB)...';
   const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
@@ -364,9 +628,7 @@ async function init() {
   });
 
   loadBanner.classList.add('hidden');
-  badge.textContent = 'Ready';
-  calibBtn.disabled = false;
-  requestAnimationFrame(detect);
+  startModel();
 }
 
 init().catch(err => {
