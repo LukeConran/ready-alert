@@ -2,4 +2,3 @@ data/
 venv
 .venv
 *.mp4
-!giphy.mp4
